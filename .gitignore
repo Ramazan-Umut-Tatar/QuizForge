@@ -1,6 +1,40 @@
-
+# --- Visual Studio / .NET ---
 .vs/
 bin/
 obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
 *.user
 *.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# NuGet
+packages/
+*.nupkg
+project.lock.json
+
+# Yayın ve test çıktıları
+publish/
+TestResults/
+*.log
+
+# Kelime düzenleyicinin ve JSON yazıcısının ürettiği yedek / geçici dosyalar
+*.bak
+*.tmp
+*.bozuk
+
+# JetBrains Rider / VS Code
+.idea/
+.vscode/
+
+# İşletim sistemi
+Thumbs.db
+.DS_Store
+
+# Gizli bilgiler: API anahtarı asla repoya girmemeli
+*.env
+appsettings.Local.json

@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -8,35 +9,47 @@ namespace QuizForge
 {
     public partial class Form2 : Form
     {
+        private readonly UygulamaServisleri _s;
         private readonly UygulamaAyarlari _ayarlar;
         private readonly QuizAyarlari _quizAyar;
-        private readonly IstatistikDeposu _istatistik;
         private readonly TemaUygulayici _tema;
         private readonly Button[] _butonlar;
         private readonly string _baslik;
+        private readonly HashSet<int> _yanlisIsaretli = new HashSet<int>();
         private QuizOturumu _oturum;
+        private bool _tamamlandi;
+        private OdulOzeti? _odul;
 
         // Kodla eklenen kontroller (Designer dosyasına dokunulmaz)
         private readonly Label _lblIlerleme = new Label();
+        private readonly Label _lblSeviye = new Label();
         private readonly Label _lblPuan = new Label();
         private readonly Label _lblBilgi = new Label();
+        private readonly Bar _barIlerleme = new Bar();
         private readonly TableLayoutPanel _sikPaneli = new TableLayoutPanel();
         private readonly TableLayoutPanel _yazPaneli = new TableLayoutPanel();
         private readonly TextBox _txtCevap = new TextBox();
-        private readonly Button _btnKontrol = new Button();
-        private readonly Button _btnBilmiyorum = new Button();
+        private readonly Button _btnKontrol = ArayuzYardimcisi.Dugme("Kontrol Et", birincil: true);
+        private readonly Button _btnBilmiyorum = ArayuzYardimcisi.Dugme("Bilmiyorum / Geç (cevabı göster)");
 
-        public Form2(IEnumerable<KelimeKarti> kartlar, UygulamaAyarlari ayarlar, IstatistikDeposu istatistik)
+        public Form2(UygulamaServisleri servisler, IEnumerable<KelimeKarti> kartlar, IEnumerable<KelimeKarti>? havuz = null)
         {
             InitializeComponent();
 
-            _ayarlar = ayarlar;
-            _istatistik = istatistik;
-            _quizAyar = ayarlar.QuizAyarlariOlustur();
-            _tema = new TemaUygulayici(ayarlar);
+            _s = servisler;
+            _ayarlar = servisler.Ayarlar;
+            _quizAyar = _ayarlar.QuizAyarlariOlustur();
+            _tema = new TemaUygulayici(_ayarlar);
             _butonlar = new[] { button1, button2, button3, button4 };
-            _baslik = _quizAyar.Mod == SoruModu.Sikli ? "Çoktan Seçmeli Sorular" : "Yazarak Cevap";
-            _oturum = new QuizOturumu(kartlar, _quizAyar, istatistik);
+
+            switch (_quizAyar.Mod)
+            {
+                case SoruModu.Sikli: _baslik = "Çoktan Seçmeli Sorular"; break;
+                case SoruModu.Yazili: _baslik = "Yazarak Cevap"; break;
+                default: _baslik = "Ustalık Merdiveni"; break;
+            }
+
+            _oturum = new QuizOturumu(kartlar, _quizAyar, servisler.Istatistik, havuz);
 
             ArayuzuKur();
 
@@ -47,45 +60,56 @@ namespace QuizForge
 
         /// <summary>
         /// Designer'daki sabit konumlu kontrolleri (button1-4, listBox1-2) pencereyle büyüyen
-        /// bir TableLayoutPanel düzenine taşır ve yazılı mod kontrollerini ekler.
+        /// bir TableLayoutPanel düzenine taşır ve yazılı/cümle sorusu kontrollerini ekler.
+        /// Hangi panelin görüneceği her soruda soru tipine göre belirlenir.
         /// </summary>
         private void ArayuzuKur()
         {
             SuspendLayout();
             Controls.Clear();
 
-            MinimumSize = new Size(560, 420);
+            MinimumSize = new Size(640, 500);
             Text = _baslik;
 
-            // --- Skor çubuğu (eski listBox1'in yerini alır; sekmelerle hizalama yerine iki etiket) ---
+            // --- Skor çubuğu (eski listBox1'in yerini alır): ilerleme | seviye | puan ---
             var skorPaneli = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 2,
+                ColumnCount = 3,
                 RowCount = 1,
                 BackColor = listBox1.BackColor,
-                Margin = new Padding(0, 0, 0, 8),
+                Margin = new Padding(0, 0, 0, 6),
+                Padding = new Padding(6, 0, 6, 0),
                 Tag = TemaUygulayici.Atla
             };
+            skorPaneli.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
             skorPaneli.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            skorPaneli.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            skorPaneli.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
             skorPaneli.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            SkorEtiketiHazirla(_lblIlerleme, ContentAlignment.MiddleLeft);
-            SkorEtiketiHazirla(_lblPuan, ContentAlignment.MiddleRight);
+            SkorEtiketiHazirla(_lblIlerleme, ContentAlignment.MiddleLeft, 1f);
+            SkorEtiketiHazirla(_lblSeviye, ContentAlignment.MiddleCenter, 0.55f);
+            SkorEtiketiHazirla(_lblPuan, ContentAlignment.MiddleRight, 1f);
             skorPaneli.Controls.Add(_lblIlerleme, 0, 0);
-            skorPaneli.Controls.Add(_lblPuan, 1, 0);
+            skorPaneli.Controls.Add(_lblSeviye, 1, 0);
+            skorPaneli.Controls.Add(_lblPuan, 2, 0);
 
             // Eski listBox1 Designer olayları için korunur ama gösterilmez.
             listBox1.Visible = false;
 
-            // --- Kelime kutusu ---
+            // --- İnce ilerleme çubuğu ---
+            _barIlerleme.Dock = DockStyle.Fill;
+            _barIlerleme.Height = 10;
+            _barIlerleme.Margin = new Padding(0, 0, 0, 10);
+
+            // --- Kelime / cümle kartı ---
             listBox2.Dock = DockStyle.Fill;
             listBox2.Margin = new Padding(0, 0, 0, 8);
             listBox2.IntegralHeight = false;
+            listBox2.BorderStyle = BorderStyle.None;
             listBox2.DrawMode = DrawMode.OwnerDrawFixed;
             listBox2.DrawItem += listBox2_DrawItem;
-            listBox2.Resize += (s, e) => KelimeKutusuYuksekligiAyarla();
+            listBox2.Resize += (s2, a2) => KelimeKutusuYuksekligiAyarla();
             listBox2.Tag = TemaUygulayici.Atla;
 
             // --- Bilgi satırı ---
@@ -93,7 +117,7 @@ namespace QuizForge
             _lblBilgi.TextAlign = ContentAlignment.MiddleCenter;
             _lblBilgi.AutoEllipsis = true;
 
-            // --- Şıklı mod paneli (2x2) ---
+            // --- Şıklı soru paneli (2x2) ---
             _sikPaneli.Dock = DockStyle.Fill;
             _sikPaneli.ColumnCount = 2;
             _sikPaneli.RowCount = 2;
@@ -104,11 +128,12 @@ namespace QuizForge
             for (int i = 0; i < _butonlar.Length; i++)
             {
                 _butonlar[i].Dock = DockStyle.Fill;
-                _butonlar[i].Margin = new Padding(4);
+                _butonlar[i].AutoSize = false;
+                _butonlar[i].Margin = new Padding(5);
                 _sikPaneli.Controls.Add(_butonlar[i], i % 2, i / 2);
             }
 
-            // --- Yazılı mod paneli ---
+            // --- Yazılı / cümle içinde soru paneli ---
             _yazPaneli.Dock = DockStyle.Fill;
             _yazPaneli.ColumnCount = 2;
             _yazPaneli.RowCount = 1;
@@ -117,76 +142,80 @@ namespace QuizForge
             _yazPaneli.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
             _txtCevap.Anchor = AnchorStyles.Left | AnchorStyles.Right;
-            _txtCevap.Margin = new Padding(4);
+            _txtCevap.Margin = new Padding(5);
             _txtCevap.Font = new Font("Segoe UI", 16f);
-            _txtCevap.KeyDown += (s, e) =>
+            _txtCevap.KeyDown += (s2, a2) =>
             {
-                if (e.KeyCode == Keys.Enter)
+                if (a2.KeyCode == Keys.Enter)
                 {
-                    e.SuppressKeyPress = true;
+                    a2.SuppressKeyPress = true;
                     YazilanCevabiKontrolEt();
                 }
             };
-            _txtCevap.TextChanged += (s, e) =>
+            _txtCevap.TextChanged += (s2, a2) =>
             {
                 _txtCevap.BackColor = _tema.GirisZemin;
                 _txtCevap.ForeColor = _tema.Yazi;
             };
 
-            _btnKontrol.Text = "Kontrol Et";
             _btnKontrol.Dock = DockStyle.Fill;
-            _btnKontrol.Margin = new Padding(4);
-            _btnKontrol.Click += (s, e) => YazilanCevabiKontrolEt();
+            _btnKontrol.AutoSize = false;
+            _btnKontrol.Margin = new Padding(5);
+            _btnKontrol.Click += (s2, a2) => YazilanCevabiKontrolEt();
 
             _yazPaneli.Controls.Add(_txtCevap, 0, 0);
             _yazPaneli.Controls.Add(_btnKontrol, 1, 0);
-
-            bool sikli = _quizAyar.Mod == SoruModu.Sikli;
-            _sikPaneli.Visible = sikli;
-            _yazPaneli.Visible = !sikli;
+            _yazPaneli.Visible = false;
 
             var cevapAlani = new Panel { Dock = DockStyle.Fill, Margin = new Padding(0) };
             cevapAlani.Controls.Add(_sikPaneli);
             cevapAlani.Controls.Add(_yazPaneli);
 
             // --- Bilmiyorum butonu ---
-            _btnBilmiyorum.Text = "Bilmiyorum / Geç (cevabı göster)";
             _btnBilmiyorum.Dock = DockStyle.Fill;
-            _btnBilmiyorum.Margin = new Padding(4);
-            _btnBilmiyorum.Click += (s, e) => CevapSonrasiIsle(_oturum.Bilmiyorum());
+            _btnBilmiyorum.AutoSize = false;
+            _btnBilmiyorum.Margin = new Padding(5);
+            _btnBilmiyorum.Click += (s2, a2) => CevapSonrasiIsle(_oturum.Bilmiyorum());
 
             // --- Kök düzen ---
             var kok = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 5,
-                Padding = new Padding(10)
+                RowCount = 6,
+                Padding = new Padding(14)
             };
             kok.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             kok.RowStyles.Add(new RowStyle(SizeType.Percent, 12));
+            kok.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             kok.RowStyles.Add(new RowStyle(SizeType.Percent, 22));
             kok.RowStyles.Add(new RowStyle(SizeType.Percent, 8));
             kok.RowStyles.Add(new RowStyle(SizeType.Percent, 46));
             kok.RowStyles.Add(new RowStyle(SizeType.Percent, 12));
             kok.Controls.Add(skorPaneli, 0, 0);
-            kok.Controls.Add(listBox2, 0, 1);
-            kok.Controls.Add(_lblBilgi, 0, 2);
-            kok.Controls.Add(cevapAlani, 0, 3);
-            kok.Controls.Add(_btnBilmiyorum, 0, 4);
+            kok.Controls.Add(_barIlerleme, 0, 1);
+            kok.Controls.Add(listBox2, 0, 2);
+            kok.Controls.Add(_lblBilgi, 0, 3);
+            kok.Controls.Add(cevapAlani, 0, 4);
+            kok.Controls.Add(_btnBilmiyorum, 0, 5);
 
             Controls.Add(kok);
             Controls.Add(listBox1);
 
             _tema.Uygula(this);
+
+            // Tema dışı bırakılan iki alanın renkleri paletten verilir (Sistem temasında tasarım renkleri korunur).
+            _tema.KartRenkleriUygula(listBox2);
+            _tema.SkorRenkleriUygula(skorPaneli, _lblIlerleme, _lblSeviye, _lblPuan);
+
             ResumeLayout(true);
         }
 
-        private void SkorEtiketiHazirla(Label etiket, ContentAlignment hiza)
+        private void SkorEtiketiHazirla(Label etiket, ContentAlignment hiza, float olcek)
         {
             etiket.Dock = DockStyle.Fill;
             etiket.TextAlign = hiza;
-            etiket.Font = new Font(listBox1.Font, listBox1.Font.Style);
+            etiket.Font = new Font(listBox1.Font.FontFamily, Math.Max(8f, listBox1.Font.Size * olcek), listBox1.Font.Style);
             etiket.ForeColor = Color.Black;
             etiket.BackColor = Color.Transparent;
             etiket.Padding = new Padding(8, 0, 8, 0);
@@ -212,39 +241,75 @@ namespace QuizForge
 
         private void SoruyuGoster()
         {
-            var soru = _oturum.MevcutSoru;
+            QuizSorusu? soru = _oturum.MevcutSoru;
             if (soru == null) return;
 
             Text = soru.Tekrar ? _baslik + " — Tekrar" : _baslik;
+
+            bool sikli = soru.Tip == SoruTipi.Sikli;
+            _sikPaneli.Visible = sikli;
+            _yazPaneli.Visible = !sikli;
+            _yanlisIsaretli.Clear();
+
             listBox2.Items.Clear();
-            listBox2.Items.Add(soru.Kart.Kelime);
+            listBox2.Items.Add(soru.Cumle != null ? soru.Cumle.Metin : soru.Kart.Kelime);
 
-            Bilgi(soru.Tekrar ? "Tekrar sorusu" : string.Empty, _tema.Yazi);
+            _lblSeviye.Text = SeviyeMetni(soru);
 
-            if (_quizAyar.Mod == SoruModu.Sikli)
+            string bilgi;
+            if (soru.Tip == SoruTipi.Cumle)
+                bilgi = $"Boşluğa gelecek kelimeyi yazın — anlamı: {soru.Kart.Anlam}";
+            else if (soru.Tekrar)
+                bilgi = "Tekrar sorusu";
+            else
+                bilgi = string.Empty;
+
+            string not = _s.Istatistik.NotAl(soru.Kart);
+            if (not.Length > 0 && soru.Tekrar)
+                bilgi += (bilgi.Length > 0 ? " • " : string.Empty) + "Notun: " + not;
+
+            Bilgi(bilgi, _tema.Palet.SolukYazi);
+
+            if (sikli)
             {
                 for (int i = 0; i < _butonlar.Length; i++)
                 {
                     bool kullanilacak = i < soru.Secenekler.Count;
                     _butonlar[i].Visible = kullanilacak;
-                    _butonlar[i].Enabled = kullanilacak;
+                    _butonlar[i].Enabled = true;
                     _butonlar[i].Text = kullanilacak ? soru.Secenekler[i] : string.Empty;
                     _tema.ButonuSifirla(_butonlar[i]);
                 }
             }
             else
             {
+                _txtCevap.PlaceholderText = soru.Tip == SoruTipi.Cumle
+                    ? "Boşluğa gelecek kelimeyi yazın"
+                    : "Anlamını yazın (alternatiflerden biri yeterli)";
                 _txtCevap.Clear();
                 _txtCevap.Focus();
             }
 
             SkoruYaz();
+            _oturum.SureyiBaslat();
+        }
+
+        private static string SeviyeMetni(QuizSorusu soru)
+        {
+            string ad = UstalikMerdiveni.Ad(soru.Seviye);
+            string tip = UstalikMerdiveni.TipAdi(soru.Tip);
+
+            return soru.SeriHedefi > 0
+                ? $"{ad} • {tip} • seri {soru.Seri}/{soru.SeriHedefi}"
+                : $"{ad} • {tip}";
         }
 
         private void SkoruYaz()
         {
             _lblIlerleme.Text = $"{_oturum.Cevaplanan}/{_oturum.ToplamSoru}";
             _lblPuan.Text = _oturum.Puan.ToString();
+            _barIlerleme.Maks = Math.Max(1, _oturum.ToplamSoru);
+            _barIlerleme.Deger = _oturum.Cevaplanan;
         }
 
         private void Bilgi(string metin, Color renk)
@@ -259,10 +324,18 @@ namespace QuizForge
 
         private void SecenekTiklandi(int index)
         {
+            // Yanlış işaretlenen şık devre dışı bırakılmaz (düz stil devre dışı rengi okunaksızdır);
+            // bunun yerine tekrar tıklanması yok sayılır.
+            if (_yanlisIsaretli.Contains(index)) return;
+
             if (_oturum.Cevapla(index) == CevapSonucu.Yanlis)
             {
-                _butonlar[index].Enabled = false;
-                _butonlar[index].BackColor = Color.Red;
+                _yanlisIsaretli.Add(index);
+                _tema.ButonuYanlisYap(_butonlar[index]);
+
+                string not = _oturum.MevcutSoru != null ? _s.Istatistik.NotAl(_oturum.MevcutSoru.Kart) : string.Empty;
+                if (not.Length > 0)
+                    Bilgi("Notun: " + not, _tema.Palet.Uyari);
                 return;
             }
 
@@ -283,9 +356,9 @@ namespace QuizForge
 
             if (sonuc == CevapSonucu.Yanlis)
             {
-                _txtCevap.BackColor = Color.FromArgb(255, 190, 190);
-                _txtCevap.ForeColor = Color.Black;
-                Bilgi($"Yanlış. Kalan hak: {_oturum.KalanDeneme}", Color.IndianRed);
+                _txtCevap.BackColor = _tema.Palet.Yanlis;
+                _txtCevap.ForeColor = _tema.Palet.DurumYazi;
+                Bilgi($"Yanlış. Kalan hak: {_oturum.KalanDeneme}", _tema.Palet.Yanlis);
                 _txtCevap.SelectAll();
                 _txtCevap.Focus();
                 return;
@@ -294,38 +367,115 @@ namespace QuizForge
             CevapSonrasiIsle(sonuc);
         }
 
-        /// <summary>Soru çözüldükten (doğru ya da geçildi) sonra ekranı günceller veya oturumu bitirir.</summary>
+        /// <summary>Soru çözüldükten (doğru ya da geçildi) sonra hata nedenini sorar, yorgunluğu kontrol eder, ilerler.</summary>
         private void CevapSonrasiIsle(CevapSonucu sonuc)
         {
-            KelimeKarti? acilan = _oturum.SonAcilanKart;
+            CozumBilgisi? cozum = _oturum.SonCozum;
 
-            if (_oturum.Bitti)
+            if (cozum != null && !cozum.IlkDenemedeDogru && _ayarlar.HataNedeniSor)
+                HataNedeniniSor(cozum);
+
+            bool erkenBitir = false;
+            if (!_oturum.Bitti && _ayarlar.YorgunlukUyarisi)
+                erkenBitir = YorgunlukKontrolu();
+
+            SkoruYaz();
+
+            if (_oturum.Bitti || erkenBitir)
             {
-                SkoruYaz();
                 OturumuBitir();
                 return;
             }
 
             SoruyuGoster();
 
-            if (sonuc == CevapSonucu.Gecildi && acilan != null)
-                Bilgi($"Doğru cevap ({acilan.Kelime}): {acilan.Anlam}", Color.DarkOrange);
+            if (cozum != null)
+                GeriBildirimGoster(cozum);
+        }
+
+        private void GeriBildirimGoster(CozumBilgisi cozum)
+        {
+            if (cozum.Gecildi)
+            {
+                Bilgi($"Doğru cevap ({cozum.Kart.Kelime}): {cozum.DogruCevap}", _tema.Palet.Uyari);
+            }
+            else if (cozum.Degisim != null && cozum.Degisim.Terfi)
+            {
+                Bilgi($"Seviye atladı: {UstalikMerdiveni.Ad(cozum.Degisim.Onceki)} → {UstalikMerdiveni.Ad(cozum.Degisim.Yeni)}",
+                      _tema.Palet.Dogru);
+            }
+            else if (cozum.IlkDenemedeDogru && !cozum.Akici)
+            {
+                Bilgi("Doğru, ama yavaş: henüz akıcı değil. Bu kelime daha sık sorulacak.", _tema.Palet.Uyari);
+            }
+        }
+
+        private void HataNedeniniSor(CozumBilgisi cozum)
+        {
+            using (var form = new HataNedeniFormu(_s, cozum))
+            {
+                form.ShowDialog(this);
+
+                if (form.Secilen.HasValue)
+                {
+                    _oturum.HataNedeniKaydet(form.Secilen.Value);
+                    _s.Profil.Say("hata_nedeni");
+                }
+            }
+        }
+
+        /// <summary>true dönerse kullanıcı oturumu bitirmek istemiştir.</summary>
+        private bool YorgunlukKontrolu()
+        {
+            YorgunlukUyarisi? uyari = _oturum.YorgunlukKontrolu();
+            if (uyari == null) return false;
+
+            _oturum.UyariGosterildi();
+
+            using (var form = new MolaFormu(uyari, _ayarlar))
+            {
+                form.ShowDialog(this);
+
+                if (form.Karar == MolaKarari.MolaVerdi)
+                    _s.Profil.Say("mola");
+
+                return form.Karar == MolaKarari.Bitir;
+            }
+        }
+
+        // ------------------------------------------------------------------
+        //  Oturum sonu
+        // ------------------------------------------------------------------
+
+        /// <summary>Oturum kaydını, XP'yi ve rozetleri bir kez işler (pencere kapansa bile).</summary>
+        private void OturumuTamamla()
+        {
+            if (_tamamlandi) return;
+            _tamamlandi = true;
+
+            if (_oturum.CozulenSoru == 0) return;
+
+            _s.Oturumlar.Ekle(_oturum.KaydiOlustur());
+            _odul = _s.Profil.OturumuIsle(_oturum, _s.UstaSayisi);
+            _s.HepsiniKaydet();
         }
 
         private void OturumuBitir()
         {
-            _istatistik.Kaydet();
+            OturumuTamamla();
 
             DialogResult sonuc;
-            using (var ozet = new OzetFormu(_oturum.YanlisKayitlari, _oturum.Puan, _ayarlar))
+            using (var ozet = new OzetFormu(_s, _oturum, _odul))
             {
                 sonuc = ozet.ShowDialog(this);
             }
 
-            if (sonuc == DialogResult.Retry)
+            if (sonuc == DialogResult.Retry && _oturum.YanlisKayitlari.Count > 0)
             {
                 List<KelimeKarti> yanlisKartlar = _oturum.YanlisKayitlari.Select(k => k.Kart).ToList();
-                _oturum = new QuizOturumu(yanlisKartlar, _quizAyar, _istatistik, _oturum.HavuzKartlari);
+                _oturum = new QuizOturumu(yanlisKartlar, _quizAyar, _s.Istatistik, _oturum.HavuzKartlari);
+                _tamamlandi = false;
+                _odul = null;
                 SoruyuGoster();
                 return;
             }
@@ -335,8 +485,9 @@ namespace QuizForge
 
         private void Form2_KeyDown(object? sender, KeyEventArgs e)
         {
-            // 1-4 tuşları şıkları seçer (yazılı modda rakam yazabilmek için devre dışı).
-            if (_quizAyar.Mod != SoruModu.Sikli) return;
+            // 1-4 tuşları şıkları seçer; yalnızca şıklı sorularda (yazarken rakam girilebilsin).
+            QuizSorusu? soru = _oturum.MevcutSoru;
+            if (soru == null || soru.Tip != SoruTipi.Sikli) return;
 
             int index;
             switch (e.KeyCode)
@@ -348,7 +499,7 @@ namespace QuizForge
                 default: return;
             }
 
-            if (_butonlar[index].Visible && _butonlar[index].Enabled)
+            if (_butonlar[index].Visible)
             {
                 e.Handled = true;
                 _butonlar[index].PerformClick();
@@ -357,7 +508,7 @@ namespace QuizForge
 
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
-            _istatistik.Kaydet();
+            OturumuTamamla();
             base.OnFormClosed(e);
         }
 
@@ -384,12 +535,15 @@ namespace QuizForge
                 e.Graphics.FillRectangle(arkaPlan, e.Bounds);
             }
 
+            // Boşluk bırakılan kenarlar: metin kartın kenarlarına yapışmasın.
+            Rectangle alan = Rectangle.Inflate(e.Bounds, -16, -8);
+
             TextRenderer.DrawText(
                 e.Graphics,
                 text,
                 listBox2.Font,
-                e.Bounds,
-                Color.Black,
+                alan,
+                listBox2.ForeColor,
                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter |
                 TextFormatFlags.WordBreak | TextFormatFlags.EndEllipsis);
         }

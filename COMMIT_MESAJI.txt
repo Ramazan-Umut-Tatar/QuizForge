@@ -1,0 +1,77 @@
+feat: ustalık merdiveni, sakin tema ve arayüz yenilemesi, önbellek optimizasyonları
+
+QuizForge sade bir quiz uygulamasından öğrenme araçlarına sahip bir çalışma
+uygulamasına dönüştürüldü. Arayüz yeniden tasarlandı, ayarlar penceresindeki
+kayma giderildi ve disk/CPU kullanımını azaltan optimizasyonlar yapıldı.
+
+## Yenilikler (öğrenme)
+- Ustalık merdiveni: Yeni -> Öğreniliyor -> Pekişti -> Usta. Soru tipi seviyeye
+  göre değişir (şıklı -> yazılı -> cümle içinde). Seviye atlamak için üst üste,
+  ilk denemede ve hızlı doğru cevap gerekir; yanlış cevap seriyi sıfırlar.
+- Cümle içinde boşluk doldurma: kelime dosyalarına isteğe bağlı 3. sütun
+  (örnek cümle) ve 4. sütun (etiketler). Eski 2 sütunlu dosyalar aynen çalışır.
+- Cevap süresi takibi: doğru ama yavaş cevap "akıcı değil" işaretlenir ve
+  seriyi ilerletmez.
+- Karıştırdığın çiftler antrenmanı: sık karıştırılan iki kelime yan yana
+  sorulur, farklar vurgulanarak karşılaştırılır.
+- Hatadan öğrenme: yanlıştan sonra neden sorulur (bilmiyordum / karıştırdım /
+  dikkatsizlik); son 7 günlük hata türü dağılımı panelde gösterilir.
+- Yorgunluk uyarısı: doğruluk düşüp süre uzarsa 5 dakikalık mola önerilir;
+  geçmiş oturumlardan ideal oturum uzunluğu hesaplanır.
+- Bugünkü tekrar: vadesi gelen kelimeler için ayrı oturum ve günde bir kez
+  "tekrarın hazır" bildirimi (uygulama açıkken / tepsideyken).
+- Rozet ve XP: yalnızca öğrenme davranışlarını ödüllendirir, kapatılabilir.
+- Kelime düzenleyici: ekleme, silme, etiket, örnek cümle; tekrar ve çakışan
+  anlamlar anında işaretlenir. Kaydederken önceki sürüm .bak olarak saklanır.
+- Metinden kelime çıkarma: yapıştırılan metinden aday kelimeler, metindeki
+  cümleyle birlikte desteye eklenir.
+- İsteğe bağlı yapay zekâ desteği (varsayılan kapalı): örnek cümle, çağrışım,
+  hata açıklaması ve toplu anlam doldurma. Yalnızca kullanıcı bir AI düğmesine
+  bastığında çalışır; API anahtarı varsayılan olarak diske yazılmaz.
+- Çoklu dosya seçimi ve etiket filtresi; otomatik veri doğrulama.
+
+## Arayüz
+- Dört tema: Sakin gece (varsayılan, mavi-gri), Sepya (sıcak kâğıt tonu),
+  Koyu gri ve Sistem (açık). Beyaz yüzeyler yerine düşük parlaklıklı paletler.
+- Düz (flat) butonlar, hover/basılı durumları, vurgulu birincil butonlar.
+- Kart tabanlı düzen; Form1'de başlık alanı, Form2'de tema renkli soru kartı,
+  ince ilerleme çubuğu ve yumuşak doğru/yanlış renkleri.
+- Öğrenme paneli yan menülü kart sayfalarına dönüştürüldü; tema renklerini
+  alan yuvarlak ilerleme çubuğu (Bar) eklendi.
+- Tüm formlar pencereyle birlikte büyür (TableLayoutPanel); yazı boyutu
+  %80-200 arası ayarlanabilir.
+- Ayarlar penceresi: tema seçici eklendi, bölümler kart düzenine alındı.
+
+## Düzeltmeler
+- Ayarlar penceresinde yazıların kayması giderildi: GroupBox içine doğrudan
+  eklenen kontroller üst üste biniyordu ve onay kutuları AutoSize olmadan
+  oluşturulduğu için metinleri kırpılıyordu.
+- Yanlış işaretlenen şıklar artık devre dışı bırakılmıyor (düz stilde devre
+  dışı yazı rengi okunaksızdı); tekrar tıklama yok sayılıyor.
+- Çift antrenmanında "Bitir" sonrası Sonraki/Kapat düğmesinin çift tetiklenmesi
+  giderildi.
+- Önceki sürümde listenin son %23'ünü neredeyse hiç sormayan rastgele seçim
+  düzeltildi (düzgün rastgele).
+
+## Optimizasyonlar
+- KelimeDeposu: dosyalar son değişiklik zamanı ve boyutuyla önbelleğe alınır;
+  ana ekran sayaçları, hatırlatıcı ve düzenleyiciler dosya değişmedikçe diskten
+  yeniden okuma/ayrıştırma yapmaz. Kaydet/Ekle/YeniDosya önbelleği geçersiz kılar.
+- JsonDosya: içerik değişmediyse diske yazılmaz (ayar, profil, istatistik).
+- QuizOturumu: şık havuzu oturum başında bir kez hazırlanır; son ek
+  KelimeKarti içinde bir kez hesaplanır (her soruda yeniden gruplama yok).
+- DuzenleyiciFormu: her hücre düzenlemesinde tüm satırlar için Regex ile kart
+  üretmek yerine kart önbelleği kullanılır.
+- TemaUygulayici: font önbelleği (GDI nesnesi sızıntısı önlendi); renk ve
+  font uygulaması tek geçişte.
+- IstatistikFormu: yalnızca açık sayfa üretilir (önceden tüm sekmeler açılışta
+  üretiliyordu); liste doldurmada BeginUpdate/EndUpdate.
+- MetindenKelimeFormu: toplu satır eklemede düzen hesaplaması askıya alınır.
+- CiftAntrenmanFormu: her metin parçasında yeni Font üretimi kaldırıldı.
+- Tekrarlayan arayüz kodu ArayuzYardimcisi altında toplandı.
+
+## Geçiş notları
+- Ayarlardaki KaranlikTema alanı kaldırıldı; yerine Tema (varsayılan Sakin gece)
+  geldi. Eski ayarlar.json içindeki KaranlikTema değeri yok sayılır.
+- Kullanıcı verileri %AppData%\KelimeEzber altında tutulur ve repoya girmez.
+- Proje ve ad alanı Odev2'den QuizForge'a taşındı.

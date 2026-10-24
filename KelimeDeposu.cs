@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace QuizForge
 {
@@ -13,13 +14,26 @@ namespace QuizForge
     }
 
     /// <summary>
-    /// Klasördeki .txt dosyalarını bulur, birden çok dosyayı birleştirerek okur ve doğrular.
-    /// Dosya biçimi: her satırda "kelime[TAB]anlam".
+    /// Klasördeki .txt kelime dosyalarını okur, doğrular ve yazar.
+    /// Satır biçimi: kelime[TAB]anlam[TAB]örnek cümle(isteğe bağlı)[TAB]etiketler(isteğe bağlı, virgülle)
+    /// Okunan dosyalar son değişiklik zamanı ve boyutuyla önbelleğe alınır; dosya değişmedikçe diskten
+    /// yeniden okunmaz (ana ekran sayaçları, hatırlatıcı ve düzenleyiciler sık sık tüm desteyi ister).
     /// </summary>
     public sealed class KelimeDeposu
     {
         private const string Uzanti = ".txt";
+
+        private sealed class DosyaOnbellegi
+        {
+            public DateTime Zaman { get; set; }
+            public long Boyut { get; set; }
+            public List<KelimeKarti> Kartlar { get; set; } = new List<KelimeKarti>();
+            public List<string> Uyarilar { get; set; } = new List<string>();
+        }
+
         private readonly string _klasorYolu;
+        private readonly Dictionary<string, DosyaOnbellegi> _onbellek =
+            new Dictionary<string, DosyaOnbellegi>(StringComparer.OrdinalIgnoreCase);
 
         public KelimeDeposu(string klasorYolu)
         {
@@ -34,6 +48,9 @@ namespace QuizForge
                             .ToList();
         }
 
+        public string DosyaYolu(string dosyaIsmi) => Path.Combine(_klasorYolu, dosyaIsmi + Uzanti);
+
+        /// <summary>Birden çok dosyayı birleştirir; birebir tekrarları eler ve uyarıları toplar.</summary>
         public YuklemeSonucu Yukle(IEnumerable<string> dosyaIsimleri)
         {
             var sonuc = new YuklemeSonucu();
@@ -45,16 +62,111 @@ namespace QuizForge
             return sonuc;
         }
 
+        /// <summary>Düzenleyici için: tekrarları elemeden, dosyada ne varsa olduğu gibi okur.</summary>
+        public YuklemeSonucu HamOku(string dosyaIsmi)
+        {
+            var sonuc = new YuklemeSonucu();
+            DosyayiOku(dosyaIsmi, sonuc);
+            return sonuc;
+        }
+
+        public List<KelimeKarti> TumKartlariYukle() => Yukle(DosyaIsimleriniGetir()).Kartlar;
+
+        /// <summary>Dosyanın tamamını verilen kartlarla yeniden yazar (önceki sürüm .bak olarak saklanır).</summary>
+        public void Kaydet(string dosyaIsmi, IEnumerable<KelimeKarti> kartlar)
+        {
+            string yol = DosyaYolu(dosyaIsmi);
+            Directory.CreateDirectory(_klasorYolu);
+
+            if (File.Exists(yol))
+                File.Copy(yol, yol + ".bak", true);
+
+            File.WriteAllLines(yol, kartlar.Select(SatirOlustur), new UTF8Encoding(false));
+            _onbellek.Remove(dosyaIsmi);
+        }
+
+        /// <summary>Mevcut dosyaya dokunmadan sonuna yeni kartlar ekler.</summary>
+        public void Ekle(string dosyaIsmi, IEnumerable<KelimeKarti> yeniKartlar)
+        {
+            string yol = DosyaYolu(dosyaIsmi);
+            var metin = new StringBuilder(File.Exists(yol) ? File.ReadAllText(yol) : string.Empty);
+
+            if (metin.Length > 0 && metin[metin.Length - 1] != '\n')
+                metin.AppendLine();
+
+            foreach (KelimeKarti kart in yeniKartlar)
+                metin.AppendLine(SatirOlustur(kart));
+
+            File.WriteAllText(yol, metin.ToString(), new UTF8Encoding(false));
+            _onbellek.Remove(dosyaIsmi);
+        }
+
+        /// <summary>Boş bir kelime dosyası oluşturur ve temizlenmiş dosya adını döndürür.</summary>
+        public string YeniDosyaOlustur(string istenenIsim)
+        {
+            char[] gecersiz = Path.GetInvalidFileNameChars();
+            string temiz = new string((istenenIsim ?? string.Empty).Trim().Where(c => Array.IndexOf(gecersiz, c) < 0).ToArray());
+
+            if (temiz.Length == 0)
+                throw new ArgumentException("Geçersiz dosya adı.");
+
+            string yol = DosyaYolu(temiz);
+            if (!File.Exists(yol))
+                File.WriteAllText(yol, string.Empty, new UTF8Encoding(false));
+
+            _onbellek.Remove(temiz);
+            return temiz;
+        }
+
+        // ------------------------------------------------------------------
+
         private void DosyayiOku(string dosyaIsmi, YuklemeSonucu sonuc)
         {
-            string yol = Path.Combine(_klasorYolu, dosyaIsmi + Uzanti);
+            string yol = DosyaYolu(dosyaIsmi);
 
             if (!File.Exists(yol))
             {
+                _onbellek.Remove(dosyaIsmi);
                 sonuc.Uyarilar.Add($"{dosyaIsmi}{Uzanti} bulunamadı.");
                 return;
             }
 
+            var bilgi = new FileInfo(yol);
+
+            if (_onbellek.TryGetValue(dosyaIsmi, out DosyaOnbellegi? kayit)
+                && kayit.Zaman == bilgi.LastWriteTimeUtc
+                && kayit.Boyut == bilgi.Length)
+            {
+                // Kartlar değişmezdir; yalnızca listeler kopyalanır.
+                sonuc.Kartlar.AddRange(kayit.Kartlar);
+                sonuc.Uyarilar.AddRange(kayit.Uyarilar);
+                return;
+            }
+
+            var kartlar = new List<KelimeKarti>();
+            var uyarilar = new List<string>();
+
+            if (!SatirlariOku(dosyaIsmi, yol, kartlar, uyarilar))
+            {
+                sonuc.Uyarilar.AddRange(uyarilar);
+                return;
+            }
+
+            _onbellek[dosyaIsmi] = new DosyaOnbellegi
+            {
+                Zaman = bilgi.LastWriteTimeUtc,
+                Boyut = bilgi.Length,
+                Kartlar = kartlar,
+                Uyarilar = uyarilar
+            };
+
+            sonuc.Kartlar.AddRange(kartlar);
+            sonuc.Uyarilar.AddRange(uyarilar);
+        }
+
+        /// <summary>Dosyayı ayrıştırır. Okunamazsa false döner (uyarı listesine neden yazılır).</summary>
+        private static bool SatirlariOku(string dosyaIsmi, string yol, List<KelimeKarti> kartlar, List<string> uyarilar)
+        {
             string[] satirlar;
             try
             {
@@ -62,8 +174,8 @@ namespace QuizForge
             }
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
             {
-                sonuc.Uyarilar.Add($"{dosyaIsmi}{Uzanti} okunamadı: {ex.Message}");
-                return;
+                uyarilar.Add($"{dosyaIsmi}{Uzanti} okunamadı: {ex.Message}");
+                return false;
             }
 
             for (int i = 0; i < satirlar.Length; i++)
@@ -72,9 +184,9 @@ namespace QuizForge
                 if (string.IsNullOrWhiteSpace(satir)) continue;
 
                 string[] parcalar = satir.Split('\t');
-                if (parcalar.Length != 2)
+                if (parcalar.Length < 2 || parcalar.Length > 4)
                 {
-                    sonuc.Uyarilar.Add($"{dosyaIsmi}, satır {i + 1}: TAB ile ayrılmış 2 sütun bekleniyordu, satır atlandı.");
+                    uyarilar.Add($"{dosyaIsmi}, satır {i + 1}: 2 ile 4 arasında TAB ile ayrılmış sütun bekleniyordu, satır atlandı.");
                     continue;
                 }
 
@@ -83,19 +195,21 @@ namespace QuizForge
 
                 if (kelime.Length == 0 || anlam.Length == 0)
                 {
-                    sonuc.Uyarilar.Add($"{dosyaIsmi}, satır {i + 1}: kelime veya anlam boş, satır atlandı.");
+                    uyarilar.Add($"{dosyaIsmi}, satır {i + 1}: kelime veya anlam boş, satır atlandı.");
                     continue;
                 }
 
-                sonuc.Kartlar.Add(new KelimeKarti(kelime, anlam, dosyaIsmi));
+                string ornek = parcalar.Length > 2 ? parcalar[2].Trim() : string.Empty;
+                List<string> etiketler = parcalar.Length > 3
+                    ? MetinYardimcisi.EtiketleriAyir(parcalar[3])
+                    : new List<string>();
+
+                kartlar.Add(new KelimeKarti(kelime, anlam, dosyaIsmi, ornek, etiketler));
             }
+
+            return true;
         }
 
-        /// <summary>
-        /// 1) Birebir aynı kayıtları (kelime + anlam) eler.
-        /// 2) Aynı kelimenin farklı anlamlarını ve aynı anlamı paylaşan farklı kelimeleri uyarı olarak bildirir
-        ///    (şıklarda iki doğru cevap çıkmasına yol açabilecek durumlar).
-        /// </summary>
         private static void Dogrula(YuklemeSonucu sonuc)
         {
             var gorulen = new Dictionary<string, KelimeKarti>();
@@ -117,24 +231,28 @@ namespace QuizForge
             sonuc.Kartlar.Clear();
             sonuc.Kartlar.AddRange(temiz);
 
-            // Aynı kelime, farklı anlam
-            foreach (var grup in temiz.GroupBy(k => k.KelimeAnahtari).Where(g => g.Count() > 1))
-            {
-                sonuc.Uyarilar.Add(
-                    $"\"{grup.First().Kelime}\" birden fazla anlamla tanımlı: {string.Join(" | ", grup.Select(k => k.Anlam))}");
-            }
+            foreach (DogrulamaUyarisi uyari in KelimeDogrulayici.Analiz(temiz))
+                sonuc.Uyarilar.Add(uyari.Mesaj);
+        }
 
-            // Aynı anlam, farklı kelime
-            var ortakAnlamlar = temiz
-                .SelectMany(k => k.Anlamlar.Select(a => new { Anlam = a, Kart = k }))
-                .GroupBy(x => x.Anlam)
-                .Where(g => g.Select(x => x.Kart.KelimeAnahtari).Distinct().Count() > 1);
+        private static string Temizle(string? metin) =>
+            (metin ?? string.Empty).Replace('\t', ' ').Replace('\r', ' ').Replace('\n', ' ').Trim();
 
-            foreach (var grup in ortakAnlamlar)
+        private static string SatirOlustur(KelimeKarti kart)
+        {
+            var alanlar = new List<string>
             {
-                string kelimeler = string.Join(", ", grup.Select(x => x.Kart.Kelime).Distinct());
-                sonuc.Uyarilar.Add($"Aynı anlam birden fazla kelimede: \"{grup.Key}\" → {kelimeler}");
-            }
+                Temizle(kart.Kelime),
+                Temizle(kart.Anlam),
+                Temizle(kart.Ornek),
+                Temizle(string.Join(", ", kart.Etiketler))
+            };
+
+            // Boş kalan son sütunları yazma: eski 2 sütunlu dosyalar bozulmasın.
+            while (alanlar.Count > 2 && alanlar[alanlar.Count - 1].Length == 0)
+                alanlar.RemoveAt(alanlar.Count - 1);
+
+            return string.Join("\t", alanlar);
         }
     }
 }

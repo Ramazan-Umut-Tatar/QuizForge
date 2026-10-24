@@ -1,33 +1,51 @@
+#nullable enable
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 
 namespace QuizForge
 {
     /// <summary>
-    /// Quiz bittiğinde puanı ve yanlış yapılan kelimeleri gösterir.
+    /// Quiz bittiğinde puanı, yanlışları, "akıcı değil" kelimeleri ve seviye atlayanları gösterir.
     /// "Sadece yanlışlarımı tekrar et" → DialogResult.Retry, "Kapat" → DialogResult.OK.
     /// Tamamen kodla kurulur (Designer dosyası gerekmez).
     /// </summary>
     public sealed class OzetFormu : Form
     {
-        public OzetFormu(IReadOnlyList<YanlisKaydi> yanlislar, int puan, UygulamaAyarlari ayarlar)
+        public OzetFormu(UygulamaServisleri servisler, QuizOturumu oturum, OdulOzeti? odul)
         {
             Text = "Quiz Özeti";
             StartPosition = FormStartPosition.CenterParent;
-            MinimumSize = new Size(560, 400);
-            Size = new Size(780, 520);
+            MinimumSize = new Size(600, 420);
+            Size = new Size(820, 560);
 
-            var baslik = new Label
+            var yanlislar = oturum.YanlisKayitlari;
+
+            var ozet = new StringBuilder();
+            ozet.Append($"Puan: {oturum.Puan}   •   Yanlış: {yanlislar.Count}   •   Doğru ama yavaş: {oturum.YavasKayitlari.Count}   •   Seviye atlayan: {oturum.Terfiler.Count}");
+
+            if (servisler.Ayarlar.RozetGoster && odul != null)
             {
-                AutoSize = true,
-                Margin = new Padding(0, 0, 0, 8),
-                Font = new Font(Font, FontStyle.Bold),
-                Text = yanlislar.Count == 0
-                    ? $"Tebrikler, hiç yanlışın yok! Puan: {puan}"
-                    : $"Puan: {puan}   •   Yanlış yapılan kelime: {yanlislar.Count}"
+                ozet.AppendLine();
+                ozet.Append($"Bu oturumdan +{odul.KazanilanXp} XP");
+
+                foreach (RozetTanimi rozet in odul.YeniRozetler)
+                {
+                    ozet.AppendLine();
+                    ozet.Append($"Yeni rozet: {rozet.Ad} — {rozet.Aciklama}");
+                }
+            }
+
+            var baslik = new TextBox
+            {
+                Multiline = true,
+                ReadOnly = true,
+                BorderStyle = BorderStyle.None,
+                Dock = DockStyle.Fill,
+                Text = ozet.ToString(),
+                TabStop = false
             };
 
             var liste = new ListView
@@ -36,22 +54,52 @@ namespace QuizForge
                 View = View.Details,
                 FullRowSelect = true,
                 GridLines = true,
-                HideSelection = false
+                HideSelection = false,
+                ShowGroups = true
             };
             liste.Columns.Add("Kelime", 170);
-            liste.Columns.Add("Doğru anlam", 230);
-            liste.Columns.Add("Yanlış", 60);
-            liste.Columns.Add("Verdiğin cevaplar", 240);
+            liste.Columns.Add("Anlam", 240);
+            liste.Columns.Add("Bilgi", 330);
+
+            var grupYanlis = new ListViewGroup("Yanlışlar");
+            var grupYavas = new ListViewGroup("Doğru ama yavaş — henüz akıcı değil");
+            var grupTerfi = new ListViewGroup("Seviye atlayanlar");
+            liste.Groups.Add(grupYanlis);
+            liste.Groups.Add(grupYavas);
+            liste.Groups.Add(grupTerfi);
 
             foreach (YanlisKaydi kayit in yanlislar)
             {
+                string verilen = kayit.VerilenCevaplar.Count > 0
+                    ? " • verdiğin: " + string.Join(", ", kayit.VerilenCevaplar.Distinct())
+                    : string.Empty;
+
                 liste.Items.Add(new ListViewItem(new[]
                 {
                     kayit.Kart.Kelime,
                     kayit.Kart.Anlam,
-                    kayit.YanlisDeneme.ToString(),
-                    string.Join(", ", kayit.VerilenCevaplar.Distinct())
-                }));
+                    $"{kayit.YanlisDeneme} yanlış deneme{verilen}"
+                }) { Group = grupYanlis });
+            }
+
+            foreach (YavasKayit yavas in oturum.YavasKayitlari)
+            {
+                liste.Items.Add(new ListViewItem(new[]
+                {
+                    yavas.Kart.Kelime,
+                    yavas.Kart.Anlam,
+                    $"{yavas.SureMs / 1000.0:0.0} sn"
+                }) { Group = grupYavas });
+            }
+
+            foreach (TerfiKaydi terfi in oturum.Terfiler)
+            {
+                liste.Items.Add(new ListViewItem(new[]
+                {
+                    terfi.Kart.Kelime,
+                    terfi.Kart.Anlam,
+                    $"{UstalikMerdiveni.Ad(terfi.Degisim.Onceki)} → {UstalikMerdiveni.Ad(terfi.Degisim.Yeni)}"
+                }) { Group = grupTerfi });
             }
 
             var btnTekrar = new Button
@@ -60,6 +108,7 @@ namespace QuizForge
                 AutoSize = true,
                 Padding = new Padding(10, 4, 10, 4),
                 Enabled = yanlislar.Count > 0,
+                Tag = TemaUygulayici.Birincil,
                 DialogResult = DialogResult.Retry
             };
             var btnKapat = new Button
@@ -87,8 +136,8 @@ namespace QuizForge
                 Padding = new Padding(12)
             };
             kok.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            kok.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            kok.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            kok.RowStyles.Add(new RowStyle(SizeType.Percent, 20));
+            kok.RowStyles.Add(new RowStyle(SizeType.Percent, 80));
             kok.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             kok.Controls.Add(baslik, 0, 0);
             kok.Controls.Add(liste, 0, 1);
@@ -98,7 +147,7 @@ namespace QuizForge
             AcceptButton = btnKapat;
             CancelButton = btnKapat;
 
-            new TemaUygulayici(ayarlar).Uygula(this);
+            new TemaUygulayici(servisler.Ayarlar).Uygula(this);
         }
     }
 }
