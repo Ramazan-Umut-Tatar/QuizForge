@@ -1,0 +1,125 @@
+Devastate	Yıkmak/tahrip etmek
+Diminish	Azalmak/azaltmak
+Distinct	Farklı/belirgin
+Distinguish	Ayırt etmek
+Emerge	Ortaya çıkmak/belirmek
+Emphasize	Vurgulamak
+Enhance	Geliştirmek/artırmak
+Enormous	Kocaman/muazzam/kocaman
+Ensure	Garantiye almak/sağlamak
+Eradicate	Yok etmek/kökünü kazımak
+Evacuate	Tahliye etmek/boşaltmak
+Evaluate	Değerlendirmek
+Evident	Açık/belirgin
+Exaggerate	Abartmak
+Excavate	Kazı yapmak/kazmak
+Exceed	Aşmak/geçmek
+Exhibit	Sergilemek/göstermek
+Expand	Genişlemek/büyümek
+Exploit	Sömürmek/faydalanmak
+Expose	Maruz bırakmak/açığa çıkarmak
+Fluctuate	Dalgalanmak/değişmek
+Frustrate	Hüsrana uğratmak/engellemek
+Generate	Üretmek/oluşturmak
+Halt	Durmak/durdurmak
+Hesitate	Tereddüt etmek/duraksamak
+Implement	Uygulamak/yerine getirmek
+Imply	İma etmek/kastetmek
+Incentive	Teşvik/özendirme
+Incorporate	Dahil etmek/birleştirmek
+Indicate	Göstermek/işaret etmek
+Abandon	Terk etmek/vazgeçmek
+Abundant	Bol/bereketli
+Accumulate	Biriktirmek/çoğalmak
+Adequate	Yeterli/uygun
+Advocate	Savunmak/desteklemek
+Alleviate	Hafifletmek/dindirmek
+Ambiguous	Belirsiz/yoruma açık
+Anticipate	Beklemek/ummak/öngörmek
+Assess	Değerlendirmek/değer biçmek
+Attribute	Atfetmek/-e bağlamak
+Bilateral	İki taraflı
+Brief	Kısa/öz
+Candidate	Aday
+Cease	Durdurmak/sona ermek
+Clarify	Açıklamak/netleştirmek
+Coincide	Aynı zamana rastlamak/tesadüf etmek
+Compel	Zorlamak/mecbur bırakmak
+Compensate	Telafi etmek/karşılamak
+Comply	Uymak/itaat etmek
+Comprehend	Anlamak/kavramak
+Conceal	Gizlemek/saklamak
+Conclusive	Kesin/inandırıcı/nihai
+Confine	Sınırlandırmak/hapsetmek
+Consequence	Sonuç
+Consist	-den oluşmak
+Contradict	Çelişmek/yalanlamak
+Crucial	Çok önemli/hayati
+Deficit	Açık/bütçe açığı/eksiklik
+Deplete	Tüketmek/azaltmak
+Deteriorate	Kötüleşmek
+Induce	İkna etmek/tetiklemek
+Inevitable	Kaçınılmaz
+Infer	Sonuç çıkarmak
+Inherit	Miras almak
+Inhibit	Engellemek/kısıtlamak
+Initial	İlk/başlangıç
+Initiate	Başlatmak
+Innovate	Yenilik yapmak
+Inquire	Sormak/soruşturmak
+Insight	İçgörü/kavrama
+Insist	Israr etmek
+Inspect	İncelemek/denetlemek
+Inspire	İlham vermek
+Integrate	Entegre etmek/bütünleştirmek
+Intend	Niyet etmek/amaçlamak
+Interfere	Müdahale etmek/karışmak
+Interpret	Yorumlamak/çevirmek
+Intervene	Araya girmek/müdahale etmek
+Intimidate	Korkutmak/gözdağı vermek
+Investigate	Araştırmak/soruşturmak
+Isolate	İzole etmek/ayırmak
+Justify	Haklı çıkarmak/savunmak
+Lack	Eksik olmak/yoksun olmak
+Legacy	Miras
+Legitimate	Meşru/yasal
+Maintain	Sürdürmek/bakımını yapmak
+Mandatory	Zorunlu
+Manipulate	Manipüle etmek/yönlendirmek
+Massive	Büyük/devasa
+Merge	Birleşmek/birleştirmek
+Neglect	İhmal etmek/önemsememek
+Negotiate	Görüşmek/müzakere etmek
+Nominate	Aday göstermek/atamak
+Notable	Dikkate değer/önemli
+Notify	Bildirmek/haber vermek
+Numerous	Çok sayıda/sayısız
+Objective	Nesnel/tarafsız/amaç
+Obligation	Zorunluluk/yükümlülük
+Obscure	Belirsiz/anlaşılmaz/gizlemek
+Observe	Gözlemlemek/uymak
+Obstacle	Engel/mani
+Obtain	Elde etmek/edinmek
+Obvious	Açık/net/bariz
+Occasion	Fırsat/durum/vesile
+Occupy	İşgal etmek/meşgul etmek
+Occur	Meydana gelmek/olmak
+Omit	Atlamak/hariç tutmak/çıkarmak
+Oppose	Karşı çıkmak/muhalefet etmek
+Option	Seçenek/tercih
+Ordinary	Sıradan/normal
+Overcome	Üstesinden gelmek/aşmak
+Overlap	Örtüşmek/üst üste gelmek
+Overlook	Göz ardı etmek/gözden kaçırmak
+Overwhelm	Bunalmak/ezmek
+Pace	Hız/adım
+Participate	Katılmak/iştirak etmek
+Particular	Belirli/özel
+Penetrate	Nüfuz etmek/içine girmek
+Perceive	Algılamak/fark etmek
+Perform	Gerçekleştirmek/sergilemek
+Wealth	zenginlik
+Absent	Yok/bulunmayan/devamsız
+Sake	Uğruna/hatrına/amacıyla
+Contribution	Katkı
+Enormous	Devasa

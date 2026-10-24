@@ -9,7 +9,7 @@ namespace QuizForge
 {
     public partial class Form1 : Form
     {
-        private readonly UygulamaServisleri _s = new UygulamaServisleri(Application.StartupPath);
+        private readonly UygulamaServisleri _s = new UygulamaServisleri(System.IO.Path.Combine(Application.StartupPath, "Dictionary"));
         private readonly TemaUygulayici _tema = new TemaUygulayici();
         private List<KelimeKarti> _kartlar = new List<KelimeKarti>();
         private bool _doldururken;
