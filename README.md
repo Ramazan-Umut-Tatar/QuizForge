@@ -40,6 +40,7 @@ QuizForge is a comprehensive vocabulary learning and memorization application bu
 
 ### Quiz Screen
 <p align="center">
+  <img src="https://github.com/user-attachments/assets/bf9afcee-0883-4067-a67e-4591f5fa79de" width="500"><br><br>
   <img src="https://github.com/user-attachments/assets/b022808e-857b-48a5-995b-95183dc64399" width="500">
 </p>
 
