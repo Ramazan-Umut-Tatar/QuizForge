@@ -38,14 +38,32 @@ QuizForge is a comprehensive vocabulary learning and memorization application bu
 
 ## Screen Shots
 
-## Screen Shots
-
-## Screen Shots
-
+### Quiz Screen
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/b022808e-857b-48a5-995b-95183dc64399" width="500" title="Quiz Screen"><br><br>
-  <img src="https://github.com/user-attachments/assets/f17aaf86-6753-4218-a53d-e8b4498caa03" width="500" title="Statistics Panel"><br><br>
-  <img src="https://github.com/user-attachments/assets/77bd3c48-fd5e-485e-9fb5-9026418ffcc5" width="500" title="Multiple-Choice Questions"><br><br>
-  <img src="https://github.com/user-attachments/assets/84f83352-18cd-4599-96e4-d42b83b581a3" width="500" title="Mixed Couples"><br><br>
-  <img src="https://github.com/user-attachments/assets/4204fef3-f85c-40c2-80c7-5744ce523b13" width="500" title="The Mixed Couples Have Been Selected">
+  <img src="https://github.com/user-attachments/assets/b022808e-857b-48a5-995b-95183dc64399" width="500">
+</p>
+
+### Statistics Panel
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/f17aaf86-6753-4218-a53d-e8b4498caa03" width="500">
+</p>
+
+### Multiple-Choice Questions
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/77bd3c48-fd5e-485e-9fb5-9026418ffcc5" width="500">
+</p>
+
+### Mixed Couples
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/84f83352-18cd-4599-96e4-d42b83b581a3" width="500">
+</p>
+
+### The Mixed Couples Have Been Selected
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/4204fef3-f85c-40c2-80c7-5744ce523b13" width="500">
+</p>
+
+### Settings Panel
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/1f73d5ac-24c6-4af7-8006-b10e6cd58637" width="500">
 </p>
