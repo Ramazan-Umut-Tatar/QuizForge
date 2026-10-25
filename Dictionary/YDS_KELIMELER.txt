@@ -123,3 +123,63 @@ Absent	Yok/bulunmayan/devamsız
 Sake	Uğruna/hatrına/amacıyla
 Contribution	Katkı
 Enormous	Devasa
+Persuade	İkna etmek
+Pervasive	Yaygın/nüfuz eden
+Phenomenon	Olay/olgu
+Pioneer	Öncü/öncülük etmek
+Plausible	Makul/mantıklı
+Poverty	Yoksulluk/fakirlik
+Predict	Tahmin etmek/öngörmek
+Prejudice	Önyargı
+Preserve	Korumak/muhafaza etmek
+Prevail	Üstün gelmek/hakim olmak
+Prevent	Önlemek/engel olmak
+Prior	Önceki/kıdemli
+Profound	Derin/çok büyük
+Promote	Desteklemek/terfi ettirmek
+Propose	Önermek/teklif etmek
+Prospect	Beklenti/olasılık
+Prosper	Gelişmek/zenginleşmek
+Provoke	Kışkırtmak/provoke etmek
+Pursue	Takip etmek/peşinden gitmek
+Radical	Köklü/radikal
+Rational	Mantıklı/rasyonel
+Recognize	Tanımak/farkına varmak
+Recommend	Tavsiye etmek/önermek
+Recover	İyileşmek/geri kazanmak
+Reduce	Azaltmak/düşürmek
+Refer	Bahsetmek/kastetmek
+Reflect	Yansıtmak/düşünmek
+Refuse	Reddetmek/geri çevirmek
+Regard	Saygı/dikkate almak
+Reject	Reddetmek/kabul etmemek
+Relevant	İlgili/alakalı
+Relieve	Rahatlatmak/hafifletmek
+Reluctant	İsteksiz/gönülsüz
+Rely	Güvenmek/bel bağlamak
+Remarkable	Dikkat çekici/olağanüstü
+Remedy	Çare/tedavi
+Remote	Uzak/ıssız
+Require	Gerektirmek/ihtiyaç duymak
+Resemble	Benzemek/andırmak
+Resent	İçerlemek/kızmak
+Resist	Direnmek/karşı koymak
+Resolve	Çözmek/karar vermek
+Resource	Kaynak
+Respect	Saygı/saygı göstermek
+Respond	Yanıtlamak/tepki vermek
+Restore	Eski haline getirmek/onarmak
+Restrict	Kısıtlamak/sınırlandırmak
+Retain	Korumak/elinde tutmak
+Reveal	Açığa çıkarmak/ifşa etmek
+Ridiculous	Gülünç/saçma
+Rigid	Sert/katı
+Rival	Rakip
+Ruin	Mahvetmek/harabe
+Sacrifice	Feda etmek/kurban
+Scarce	Kıt/nadir
+Scatter	Dağıtmak/saçmak
+Settle	Yerleşmek/halletmek
+Severe	Ciddi/şiddetli
+Shrink	Küçülmek/daralmak
+Significant	Önemli/anlamlı
