@@ -36,7 +36,7 @@ QuizForge is a comprehensive vocabulary learning and memorization application bu
 
 
 
-## Screen Shots
+## <font color="red">Screen Shots</font>
 
 ### Quiz Screen
 <p align="center">
