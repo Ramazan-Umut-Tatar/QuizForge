@@ -183,3 +183,33 @@ Settle	Yerleşmek/halletmek
 Severe	Ciddi/şiddetli
 Shrink	Küçülmek/daralmak
 Significant	Önemli/anlamlı
+Soar	Hızla yükselmek/fırlamak
+Solely	Sadece/yalnızca
+Sophisticated	Gelişmiş/karmaşık
+Spectator	İzleyici/seyirci
+Speculate	Tahmin yürütmek/spekülasyon yapmak
+Stimulate	Uyarmak/teşvik etmek
+Strict	Katı/sıkı
+Submit	Sunmak/teslim etmek
+Subsequent	Sonraki/ardından gelen
+Substitute	Yerine geçmek/yedek
+Sufficient	Yeterli
+Supervise	Denetlemek/gözetmek
+Suppress	Bastırmak/gizlemek
+Surge	Dalgalanmak/aniden artmak
+Surpass	Aşmak/geçmek
+Suspend	Askıya almak/durdurmak
+Sustain	Sürdürmek/ayakta tutmak
+Tackle	Ele almak/çözmeye çalışmak
+Tendency	Eğilim/meyil
+Terminate	Sonlandırmak/bitirmek
+Thrive	Gelişmek/büyümek
+Tolerant	Hoşgörülü/toleranslı
+Transform	Dönüştürmek/değiştirmek
+Transmit	İletmek/aktarmak
+Tremendous	Muazzam/çok büyük
+Trigger	Tetiklemek/başlatmak
+Ultimate	Nihai/son
+Unanimous	Oybirliğiyle/hemfikir
+Undergo	Geçirmek/maruz kalmak
+Undertake	Üstlenmek/girişmek
